@@ -1,0 +1,162 @@
+.net 3a
+
+Imports System.Data.SqlClient
+
+Public Class Form1
+    Dim connectionString As String = "YourConnectionString"
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Create the teacher table if it doesn't exist
+        CreateTeacherTable()
+        InsertSampleRecords()
+
+        ' Search for a teacher named "Seeta" and display the result
+        SearchTeacher("Seeta")
+    End Sub
+
+    Private Sub CreateTeacherTable()
+        Using connection As New SqlConnection(connectionString)
+            Dim query As String = "CREATE TABLE IF NOT EXISTS Teacher (Tid INT PRIMARY KEY, TName NVARCHAR(50), Subject NVARCHAR(50))"
+            Dim command As New SqlCommand(query, connection)
+            Try
+                connection.Open()
+                command.ExecuteNonQuery()
+            Catch ex As Exception
+                MessageBox.Show(ex.Message)
+            End Try
+        End Using
+    End Sub
+
+    Private Sub InsertSampleRecords()
+        Using connection As New SqlConnection(connectionString)
+            Dim query As String = "INSERT INTO Teacher (Tid, TName, Subject) VALUES (@Tid, @TName, @Subject)"
+            Dim command As New SqlCommand(query, connection)
+
+            ' Inserting sample records (Max: 5)
+            Dim teachers = {
+                New With {.Tid = 1, .TName = "Seeta", .Subject = "Math"},
+                New With {.Tid = 2, .TName = "Ram", .Subject = "Science"},
+                New With {.Tid = 3, .TName = "Geeta", .Subject = "English"},
+                New With {.Tid = 4, .TName = "Krishna", .Subject = "History"},
+                New With {.Tid = 5, .TName = "Gopal", .Subject = "Geography"}
+            }
+
+            Try
+                connection.Open()
+                For Each teacher In teachers
+                    command.Parameters.Clear()
+                    command.Parameters.AddWithValue("@Tid", teacher.Tid)
+                    command.Parameters.AddWithValue("@TName", teacher.TName)
+                    command.Parameters.AddWithValue("@Subject", teacher.Subject)
+                    command.ExecuteNonQuery()
+                Next
+            Catch ex As Exception
+                MessageBox.Show(ex.Message)
+            End Try
+        End Using
+    End Sub
+
+    Private Sub SearchTeacher(name As String)
+        Dim dataTable As New DataTable()
+        Using connection As New SqlConnection(connectionString)
+            Dim query As String = "SELECT * FROM Teacher WHERE TName = @Name"
+            Dim adapter As New SqlDataAdapter(query, connection)
+            adapter.SelectCommand.Parameters.AddWithValue("@Name", name)
+            Try
+                adapter.Fill(dataTable)
+                If dataTable.Rows.Count > 0 Then
+                    MessageBox.Show($"Teacher found - Tid: {dataTable.Rows(0)("Tid")}, TName: {dataTable.Rows(0)("TName")}, Subject: {dataTable.Rows(0)("Subject")}")
+                Else
+                    MessageBox.Show("Teacher not found.")
+                End If
+            Catch ex As Exception
+                MessageBox.Show(ex.Message)
+            End Try
+        End Using
+    End Sub
+End Class 3b
+
+
+
+10b
+
+using System;
+using System.Data.SqlClient;
+
+public partial class _Default : System.Web.UI.Page
+{
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        string connectionString = "YourConnectionString"; // Replace this with your SQL Server connection string
+
+        try
+        {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                Response.Write("Connection to the master database established successfully!");
+            }
+        }
+        catch (Exception ex)
+        {
+            Response.Write("Error connecting to the master database: " + ex.Message);
+        }
+    }
+}
+
+
+
+
+17
+
+Imports System.Data.SqlClient
+
+Public Class Form1
+    Dim connectionString As String = "YourConnectionString" ' Replace with your SQL Server connection string
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Load data from database into DataGridView
+        LoadDataIntoDataGridView()
+    End Sub
+
+    Private Sub LoadDataIntoDataGridView()
+        Try
+            Using connection As New SqlConnection(connectionString)
+                Dim query As String = "SELECT * FROM Product"
+                Dim adapter As New SqlDataAdapter(query, connection)
+                Dim dataTable As New DataTable()
+                adapter.Fill(dataTable)
+                DataGridView1.DataSource = dataTable
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error loading data from database: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub btnAdd_Click(sender As Object, e As EventArgs) Handles btnAdd.Click
+        ' Add product details to the database
+        Dim pid As Integer = Convert.ToInt32(txtPID.Text)
+        Dim pname As String = txtPName.Text
+        Dim expiryDate As Date = DateTimePicker1.Value
+        Dim price As Decimal = Convert.ToDecimal(txtPrice.Text)
+
+        Try
+            Using connection As New SqlConnection(connectionString)
+                Dim query As String = "INSERT INTO Product (PID, PName, expiry_date, price) VALUES (@PID, @PName, @ExpiryDate, @Price)"
+                Dim command As New SqlCommand(query, connection)
+                command.Parameters.AddWithValue("@PID", pid)
+                command.Parameters.AddWithValue("@PName", pname)
+                command.Parameters.AddWithValue("@ExpiryDate", expiryDate)
+                command.Parameters.AddWithValue("@Price", price)
+
+                connection.Open()
+                command.ExecuteNonQuery()
+            End Using
+
+            MessageBox.Show("Product added successfully.")
+            LoadDataIntoDataGridView()
+        Catch ex As Exception
+            MessageBox.Show("Error adding product: " & ex.Message)
+        End Try
+    End Sub
+End Class
