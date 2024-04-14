@@ -1,0 +1,137 @@
+//   slip10b
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+
+@WebServlet(name = "productservlet", urlPatterns = {"/productservlet"})
+public class productservlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
+        
+        // Database connection parameters
+        Connection con = null;
+        Statement stmt = null;
+        ResultSet rs = null;
+
+        try {
+            // Load the MySQL JDBC driver
+            Class.forName("com.mysql.jdbc.Driver");
+            // Establish the connection
+            con = DriverManager.getConnection("jdbc:mysql://localhost:3306/product", "root", "goal@2503");
+            stmt = con.createStatement();
+            // Query to retrieve product details
+            String query = "SELECT pcode, pname, price FROM productt";
+            // Execute query
+            rs = stmt.executeQuery(query);
+            // List to store product details
+            List<String[]> products = new ArrayList<>();
+            while (rs.next()) {
+                String prodCode = rs.getString("pcode");
+                String pName = rs.getString("pname");
+                String price = rs.getString("price");
+                // Add product details to the list
+                products.add(new String[]{prodCode, pName, price});
+            }
+            // Generate HTML table for product details
+            out.println("<html><body>");
+            out.println("<h2>Product Details</h2>");
+            out.println("<table border='1'>");
+            out.println("<tr><th>Pcode</th><th>Pname</th><th>Price</th></tr>");
+            for (String[] product : products) {
+                out.println("<tr>");
+                for (String detail : product) {
+                    out.println("<td>" + detail + "</td>");
+                }
+                out.println("</tr>");
+            }
+            out.println("</table>");
+            out.println("</body></html>");
+        } catch (ClassNotFoundException | SQLException e) {
+            out.println("Error: " + e.getMessage());
+        } finally {
+            // Close connections
+            try {
+                if (rs != null) rs.close();
+                if (stmt != null) stmt.close();
+                if (con != null) con.close();
+            } catch (SQLException e) {
+                out.println("Error closing database resources: " + e.getMessage());
+            }
+            out.close();
+        }
+    }
+}
+
+
+10a
+
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+
+public class HelloWorld {
+    public static void main(String[] args) {
+        // Create configuration object and configure Hibernate
+        Configuration configuration = new Configuration().configure();
+        // Create session factory
+        SessionFactory sessionFactory = configuration.buildSessionFactory();
+        // Open a session
+        Session session = sessionFactory.openSession();
+        // Display "Hello world" message
+        System.out.println("Hello world");
+        // Close the session and session factory
+        session.close();
+        sessionFactory.close();
+    }
+}
+
+17b server
+
+import java.io.*;
+import java.net.*;
+
+public class FileServer {
+    public static void main(String[] args) {
+        try (ServerSocket serverSocket = new ServerSocket(6666)) {
+            System.out.println("Server waiting for connection...");
+
+            while (true) {
+                try (Socket clientSocket = serverSocket.accept();
+                     DataInputStream dis = new DataInputStream(clientSocket.getInputStream());
+                     DataOutputStream dos = new DataOutputStream(clientSocket.getOutputStream());
+                ) {
+                    String filename = dis.readUTF();
+                    File file = new File(filename);
+
+                    if (file.exists()) {
+                        dos.writeBoolean(true); 
+                        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                            String line;
+                            while ((line = br.readLine()) != null) {
+                                dos.writeUTF(line); 
+                            }
+                        }
+                    } else {
+                        dos.writeBoolean(false); 
+                    }
+                } catch (IOException e) {
+                    System.out.println("Error: " + e.getMessage());
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+}
